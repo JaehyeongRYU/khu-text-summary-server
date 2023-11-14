@@ -1,0 +1,7 @@
+Flask==2.3.2
+Flask-Cors==3.0.10
+pandas
+torch==2.0.1
+transformers==4.32.1
+tokenizers==0.13.3
+lightning==2.0.8
