@@ -4,10 +4,40 @@ import re
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import TextClassificationPipeline
 import torch
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 CORS(app)
 
+# Naver news 크롤링
+newsUrl = "https://news.naver.com/main/ranking/popularDay.naver"
+newsHeaders = {"User-Agent": "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36"}
+
+
+newsRes = requests.get(newsUrl, headers=newsHeaders)
+soup = BeautifulSoup(newsRes.text, 'html.parser')
+newsBox = soup.select(".rankingnews_box")
+def load_news():
+    newsResult = []
+    for news in newsBox:
+        newsName = news.select_one(".rankingnews_name").text
+        if newsName != '중앙일보':
+            continue
+        else:
+            news_list = news.findAll("li")
+            for li in news_list:
+                list_title = li.select_one(".list_title")
+                try: news_title = list_title.text
+                except: news_title = None
+                try: news_link = list_title.get("href")
+                except: news_link = None
+                content_html = requests.get(news_link, headers=newsHeaders)
+                content_soup = BeautifulSoup(content_html.text, 'html.parser')
+                news_content = content_soup.select_one("#newsct_article").text.replace("\n","").replace("\t","")
+                newsResult.append({'news_title':news_title ,'news_link':news_link,'news_content':news_content})
+    return(newsResult)
+        
 # KoBART_PATH: hugging-face에 올라가 있는 모델 (https://huggingface.co/ryubro/myKoBARTSummary)
 MODEL_PATH = "ryubro/myKoBARTSummary"
 
@@ -49,6 +79,11 @@ def generate_answer(text):
 
     return text
 
+@app.route('/news', methods=['GET'])
+def loadNews():
+    result = load_news()
+    return (result)
+
 
 @app.route('/summary', methods=['POST'])
 def summary():
@@ -57,12 +92,13 @@ def summary():
     # input: question => BERT => output: feel_list
     summarized_text = make_summary(text)
     # input: question+feel => GPT => output: answer
-
     return jsonify({'result': summarized_text})
 
 
 if __name__ == '__main__':
     # KoBART model 로드
     load_kobart()
+    # Naver news 로드
+    loadNews()
     # Flask 애플리케이션 실행
     app.run(host='0.0.0.0')
