@@ -66,18 +66,10 @@ def make_summary(text):
         input_ids = loaded_tokenizer.encode(text)
         input_ids = torch.tensor(input_ids)
         input_ids = input_ids.unsqueeze(0)
-        output = loaded_model.generate(input_ids, eos_token_id=1, max_length=512, num_beams=5)
+        output = loaded_model.generate(input_ids, eos_token_id=1, max_length=1024, num_beams=5)
         output = loaded_tokenizer.decode(output[0], skip_special_tokens=True)
         
     return output
-
-
-
-# input: summarized_text => output: 요약된 텍스트 정리..?
-def generate_answer(text):
-    # need Something
-
-    return text
 
 @app.route('/news', methods=['GET'])
 def loadNews():
