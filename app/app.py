@@ -22,28 +22,28 @@ def load_news():
     newsResult = []
     for news in newsBox:
         newsName = news.select_one(".rankingnews_name").text
-        if newsName != '중앙일보' :
-            continue
-        else:
-            news_list = news.findAll("li")
-            for li in news_list:
-                list_title = li.select_one(".list_title")
-                try: news_title = list_title.text
-                except: news_title = None
-                try: news_link = list_title.get("href")
-                except: news_link = None
-                content_html = requests.get(news_link, headers=newsHeaders)
-                content_soup = BeautifulSoup(content_html.text, 'html.parser')
-                news_content = content_soup.select_one("#newsct_article").text.replace("\n","").replace("\t","")
-                # if len(news_content.encode()) > 2000 :
-                #     continue
-                # else :
+        # if newsName != '중앙일보' :
+        #     continue
+        # else:
+        news_list = news.findAll("li")
+        for li in news_list:
+            list_title = li.select_one(".list_title")
+            try: news_title = list_title.text
+            except: news_title = None
+            try: news_link = list_title.get("href")
+            except: news_link = None
+            content_html = requests.get(news_link, headers=newsHeaders)
+            content_soup = BeautifulSoup(content_html.text, 'html.parser')
+            news_content = content_soup.select_one("#newsct_article").text.replace("\n","").replace("\t","")
+            if len(news_content.encode()) > 2000 :
+                continue
+            else :
                 newsResult.append({'news_title':news_title ,'news_link':news_link,'news_content':news_content})
 
-        # if len(newsResult) == 5 :
-        #     break
-        # else :
-        #     continue
+        if len(newsResult) == 5 :
+            break
+        else :
+            continue
         
     return(newsResult)
         
